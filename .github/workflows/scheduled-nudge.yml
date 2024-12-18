@@ -9,10 +9,27 @@ jobs:
   send-nudge:
     runs-on: ubuntu-latest
     steps:
+      - name: Check Token
+        env:
+          DATABUTTON_TOKEN: ${{ secrets.DATABUTTON_TOKEN }}
+        run: |
+          if [ -z "$DATABUTTON_TOKEN" ]; then
+            echo "Error: DATABUTTON_TOKEN is not set"
+            exit 1
+          fi
+          echo "DATABUTTON_TOKEN is available"
+          
       - name: Send Ownership Nudge
         env:
           DATABUTTON_TOKEN: ${{ secrets.DATABUTTON_TOKEN }}
         run: |
           echo "Starting nudge send at $(date)"
-          curl -X POST https://trevyr.databutton.app/owen/v1/scheduled-nudge/send-scheduled-nudge             -H "Content-Type: application/json"             -H "Authorization: Bearer ${{ secrets.DATABUTTON_TOKEN }}"             -d "{}"             --fail
+          response=$(curl -v -X POST https://trevyr.databutton.app/owen/v1/scheduled-nudge/send-scheduled-nudge             -H "Content-Type: application/json"             -H "Authorization: Bearer $DATABUTTON_TOKEN"             -d "{}"             --fail 2>&1)
+          status=$?
+          echo "Curl exit code: $status"
+          echo "Response: $response"
+          if [ $status -ne 0 ]; then
+            echo "Failed to send nudge"
+            exit 1
+          fi
           echo "Completed nudge send at $(date)"
