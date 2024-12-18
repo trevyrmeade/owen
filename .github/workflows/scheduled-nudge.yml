@@ -1,0 +1,18 @@
+name: Hourly Ownership Nudge
+
+on:
+  schedule:
+    - cron: '* * * * *'
+  workflow_dispatch:
+
+jobs:
+  send-nudge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Ownership Nudge
+        env:
+          DATABUTTON_TOKEN: ${{ secrets.DATABUTTON_TOKEN }}
+        run: |
+          echo "Starting nudge send at $(date)"
+          curl -X POST https://trevyr.databutton.app/owen/v1/scheduled-nudge/send-scheduled-nudge             -H "Content-Type: application/json"             -H "Authorization: Bearer ${{ secrets.DATABUTTON_TOKEN }}"             -d "{}"             --fail
+          echo "Completed nudge send at $(date)"
