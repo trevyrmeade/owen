@@ -1,0 +1,44 @@
+name: Hourly Ownership Nudge
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Run every hour
+  workflow_dispatch:
+
+jobs:
+  send-nudge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Token
+        env:
+          DATABUTTON_TOKEN: ${{ secrets.DATABUTTON_TOKEN }}
+        run: |
+          if [ -z "$DATABUTTON_TOKEN" ]; then
+            echo "Error: DATABUTTON_TOKEN is not set"
+            exit 1
+          fi
+          echo "DATABUTTON_TOKEN is available"
+          
+      - name: Send Ownership Nudge
+        shell: bash
+        env:
+          DATABUTTON_TOKEN: ${{ secrets.DATABUTTON_TOKEN }}
+        run: |
+          echo "Starting nudge send at $(date)"
+          response=$(curl -v -X POST "https://trevyr.databutton.app/owen/v1/scheduled-nudge/send-scheduled-nudge" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $DATABUTTON_TOKEN" \
+            -d "{}" \
+            --fail 2>&1)
+          status=$?
+          if [ -z "$response" ]; then
+            echo "No response received. Possible network error or invalid URL."
+            exit 1
+          fi
+          if [ $status -ne 0 ]; then
+            echo "Failed to send nudge"
+            echo "Curl exit code: $status"
+            echo "Response: $response"
+            exit 1
+          fi
+          echo "Completed nudge send at $(date)"
